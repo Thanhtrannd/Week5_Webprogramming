@@ -138,7 +138,8 @@ const getStyle = (feature) => {
   let colour = hslToHex(hue, 75, 50)
   console.log(colour)
   return {
-    color: colour
+    //color: colour
+    color: "hsl(" + hue + "," + "75" + "%," + "50" + "%)",
   }
 }
 
