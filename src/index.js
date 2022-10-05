@@ -2,7 +2,7 @@ const fetchData = async () => {
   const url = "https://geo.stat.fi/geoserver/wfs?service=WFS&version=2.0.0&request=GetFeature&typeName=tilastointialueet:kunta4500k&outputFormat=json&srsName=EPSG:4326"
   const res = await fetch(url)
   const data = await res.json()
-
+  console.log(data)
   initMap(data)
 };
 
@@ -18,7 +18,7 @@ const initMap = (data) => {
 
   let osm = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
-    attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+    attribution: 'Open street map'
   }).addTo(map);
 
   map.fitBounds(geoJson.getBounds())
@@ -26,7 +26,10 @@ const initMap = (data) => {
 }
 
 const getFeature = (feature, layer) => {
-
+  if (!feature.properties.name) return;
+  const name = feature.properties.name
+  console.log(name)
+  layer.bindTooltip(name)
 }
 
 fetchData()
