@@ -53,12 +53,13 @@ const initMap = (data) => {
 
   let geoJson = L.geoJson(data, {
     weight: 2,
-    onEachFeature: getFeature
+    onEachFeature: getFeature,
+    style: getStyle
   }).addTo(map)
 
-  let osm = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  let osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
-    attribution: 'Open street map'
+    attribution: '© OpenStreetMap'
   }).addTo(map);
 
   let baseMaps = {
@@ -81,13 +82,24 @@ const getFeature = (feature, layer) => {
   console.log(name)
   layer.bindTooltip(name)
 
+  // construct popup
+  let {pos_label, pos_value, neg_label, neg_value} = getMigration(name);  
+  layer.bindPopup(
+    `<ul>
+      <li>${pos_label}: ${pos_value}</li>
+      <li>${neg_label}: ${neg_value}</li>
+    </ul>`
+  )
+}
+
+const getMigration = (region) => {
   // Index positive migration data
   var pos_index;
   var pos_value = "";
   var pos_label = "";
   for (let key in posLabel) {
     pos_label = posLabel[key];
-    if (pos_label.includes(name)) {
+    if (pos_label.includes(region)) {
       pos_index = posIndex[key]
       pos_value = posValue[pos_index]
       break
@@ -102,7 +114,7 @@ const getFeature = (feature, layer) => {
   var neg_label = "";
   for (let key in negLabel) {
     neg_label = negLabel[key];
-    if (neg_label.includes(name)) {
+    if (neg_label.includes(region)) {
       neg_index = negIndex[key]
       neg_value = negValue[neg_index]
       break
@@ -111,14 +123,34 @@ const getFeature = (feature, layer) => {
   if (neg_value ==="") {
     neg_label = ""
   }
+  return {pos_label, pos_value, neg_label, neg_value};
+}
 
-  // construct popup
-  layer.bindPopup(
-    `<ul>
-      <li>${pos_label}: ${pos_value}</li>
-      <li>${neg_label}: ${neg_value}</li>
-    </ul>`
-  )
+const getStyle = (feature) => {
+  if (!feature.properties.name) return;
+  const name = feature.properties.name
+  
+  let {pos_label, pos_value, neg_label, neg_value} = getMigration(name);
+  let hue = ((pos_value/neg_value)**3)*60;
+  if (hue > 120) {
+    hue = 120
+  }
+  let colour = hslToHex(hue, 75, 50)
+  console.log(colour)
+  return {
+    color: colour
+  }
+}
+
+function hslToHex(h, s, l) {
+  l /= 100;
+  const a = s * Math.min(l, 1 - l) / 100;
+  const f = n => {
+    const k = (n + h / 30) % 12;
+    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * color).toString(16).padStart(2, '0');   // convert to Hex and prefix "0" if needed
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
 }
 
 fetchData()
